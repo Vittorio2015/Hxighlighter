@@ -41,7 +41,7 @@
         this.setUpTargets();
         this.setUpViewers();
         // this.setUpListeners();
-        // this.setUpStorage();
+        //this.setUpStorage();
         // this.setUpPlugins();
     };
 
@@ -90,12 +90,12 @@
 
     $.Core.prototype.StorageAnnotationSave = function(message) {
         var self = this;
-        self.callFuncInList(this.storage, 'StorageAnnotationSave', message);
+        self.callFuncInList(this.targets, 'StorageAnnotationSave', message);
     };
 
     $.Core.prototype.StorageAnnotationDelete = function(message) {
         var self = this;
-        self.callFuncInList(this.storage, 'StorageAnnotationDelete', message);
+        self.callFuncInList(this.targets, 'StorageAnnotationDelete', message);
     };
 
     // Util functions

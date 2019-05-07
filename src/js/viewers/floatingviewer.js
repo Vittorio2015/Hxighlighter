@@ -242,6 +242,9 @@ import 'jquery-confirm/css/jquery-confirm.css'
                 }
             }
         });
+
+        $.publishEvent('displayShown', self.instance_id, [self.annotation_tool.viewer, annotations]);
+
     };
 
     $.FloatingViewer.prototype.ViewerDisplayClose = function(annotations) {
@@ -265,6 +268,15 @@ import 'jquery-confirm/css/jquery-confirm.css'
     $.FloatingViewer.prototype.StorageAnnotationSave = function(annotations) {
 
     };
+
+    $.FloatingViewer.prototype.StorageAnnotationDelete = function(annotation) {
+        var self = this;
+        jQuery('.annotation-viewer').remove();
+        delete self.annotation_tool.viewer;
+        self.annotation_tool.isStatic = false;
+        self.annotation_tool.updating = false;
+        self.annotation_tool.editing = false;
+    }
 
      $.FloatingViewer.prototype.setUpPinAndMove = function() {
         var self = this;

@@ -11,6 +11,8 @@ require('./viewers/floatingviewer.js');
 require('./plugins/hx-summernote-plugin.js');
 require('./plugins/hx-simpletags-plugin.js');
 require('./plugins/hx-dropdowntags-plugin.js');
+require('./plugins/hx-colortags-plugin.js');
+require('./storage/catchpy.js');
 
 (function($) {
 
@@ -48,7 +50,7 @@ require('./plugins/hx-dropdowntags-plugin.js');
             this.makeQuery(this.options.object_source, this.createTextSlotFromURL.bind(this), this.target_selector)
         } else if (this.options.method == "inline") {
             // if the text is already in the DOM, this sets up what is left
-            this.createTextSlotFromSelector(this.options.object_source, this.target_selector);
+            this.createTextSlotFromSelector(this.options.object_source, this.instance_id);
         }
     };
 
@@ -83,7 +85,9 @@ require('./plugins/hx-dropdowntags-plugin.js');
         
         // each annotation target will be enclosed in a "slot" with a temporary unique id
         this.guid = Hxighlighter.getUniqueId();
-        var slot = jQuery(selector).addClass('annotation-slot');
+        var slot = jQuery(selector);
+        slot.addClass('annotation-slot');
+        slot.attr('id', this.guid);
         jQuery('.annotations-section').addClass('annotator-wrapper').removeClass('annotations-section');
         
         // lets core know that the target has finished loading on screen
@@ -140,13 +144,17 @@ require('./plugins/hx-dropdowntags-plugin.js');
 
         Hxighlighter.subscribeEvent('editorShown', self.instance_id, function(_, editor, annotation) {
             jQuery.each(self.plugins, function(_, plugin) {
-                plugin.editorShown(editor, annotation);
+                if (typeof(plugin.editorShown) === "function") {
+                    plugin.editorShown(editor, annotation);
+                }
             });
         });
 
         Hxighlighter.subscribeEvent('displayShown', self.instance_id, function(_, display, annotations) {
             jQuery.each(self.plugins, function(_, plugin) {
-                plugin.displayShown(display, annotations);
+                if (typeof(plugin.displayShown) === "function") {
+                    plugin.displayShown(display, annotations);
+                }
             });
         });
     };
@@ -158,6 +166,7 @@ require('./plugins/hx-dropdowntags-plugin.js');
      * @param      {<type>}  element  The element
      */
     $.TextTarget.prototype.setUpSelectors = function(element) {
+        console.log(element);
         var self = this;
         self.selectors = [];
         jQuery.each(Hxighlighter.selectors, function(_, selector) {
@@ -345,6 +354,7 @@ require('./plugins/hx-dropdowntags-plugin.js');
      * @class      StorageAnnotationSave (name)
      */
     $.TextTarget.prototype.StorageAnnotationSave = function(annotations) {
+        var self = this;
         jQuery.each(self.viewers, function(_, viewer) {
             viewer.StorageAnnotationSave(annotations, event);
         });
@@ -374,7 +384,10 @@ require('./plugins/hx-dropdowntags-plugin.js');
      * @class      StorageAnnotationDelete (name)
      */
     $.TextTarget.prototype.StorageAnnotationDelete = function() {
-        console.log('reach here');
+        var self = this;
+        jQuery.each(self.viewers, function(_, viewer) {
+            viewer.StorageAnnotationDelete();
+        });
     };
 
     /**
