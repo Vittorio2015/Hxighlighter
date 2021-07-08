@@ -1,9 +1,9 @@
-<div class="annotationItem item-<%= id %> side" role="listitem" aria-label="Annotation #<%=index%>">
+<div class="ann-item annotationItem item-<%= id %> side <% if (instructor_ids.indexOf(creator.id) > -1) {%>inst<%}%>" role="listitem" aria-label="Annotation #<%=index%>">
     <div style="overflow:auto;">
     <span class="idAnnotation" style="display:none;"><%= id %></span>
     <% if (typeof(creator) !== 'undefined') { %>
-    <div class= "annotatedBy field side" aria-label="Annotation created by <%= creator.name %>">     
-        <%= creator.name %>
+    <div class= "annotatedBy field side" aria-label="Annotation created by <% if (instructor_ids.indexOf(creator.id) > -1) { print(common_name);} else {print(creator.name);} %>">
+        <% if (instructor_ids.indexOf(creator.id) > -1) { print(common_name);%>&nbsp;<span class="fas fa-certificate"></span><%} else {print(creator.name);} %>     
         <% } else { %>
         <div class= "annotatedBy field side" aria-label="Annotation created by lduarte1991">
         lduarte19911
@@ -16,7 +16,7 @@
         </div>
     <% } %>
     </div>
-    <button class="edit" id="edit-<%= id %>" tabindex="0" aria-label="Edit Annotation" title="Edit Annotation"><i class="fa fa-pencil"></i></button>
+    <button class="edit" id="edit-<%= id %>" tabindex="0" aria-label="Edit Annotation" title="Edit Annotation"><i class="fas fa-edit"></i></button>
                 <button class="delete" id="delete-<%= id %>" tabindex="0" aria-label="Delete Annotation" title="Delete Annotation"><i class="fa fa-trash"></i></button>
     <% if (media === 'text' || media === "Text") {%>
         <div class="quote field side">
@@ -56,14 +56,18 @@
         </div>
     <% } %>
 
-    <div class="annotation-plugin-area-bottom"></div>
-
+    <div class="plugin-area-bottom"></div>
+        <!-- <% if (typeof(totalReplies) == "undefined" || totalReplies === 0) { %>
+            <button class='create-reply'>Reply to Annotation</button>
+        <% } else { %>
+            <button class='view-replies'>View <%= totalReplies %> Replies</button>
+        <% } %> -->
     <!-- <div class="totalreplies field side clicking_allowed" tabindex="0" role="button" aria-label="Make or view replies Annotation #<%=index %>">
         <span class="glyphicon glyphicon-comment"></span>
-        <% if (typeof(replyCount) == "undefined") { %>
+        <% if (typeof(totalReplies) == "undefined") { %>
         <span class="replyNum"> 0 </span>
         <% } else { %>
-        <span class="replyNum"> <%= replyCount %> </span>
+        <span class="replyNum"> <%= totalReplies %> </span>
         <% } %>
     </div> -->
     <script>

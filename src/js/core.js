@@ -54,7 +54,7 @@
         for (var i = 0; i < targets.length; i++) {
             var mediaType = $.Core._capitalizeMedia(targets[i].mediaType) + "Target";
             if (typeof Hxighlighter[mediaType] === "function") {
-                this.targets.push(new Hxighlighter[mediaType](targets[i], this.instance_id));
+                this.targets.push(new Hxighlighter[mediaType](jQuery.extend({}, targets[i], this.options.commonInfo), this.instance_id));
             }
         }
     };
@@ -68,14 +68,19 @@
         self.callFuncInList(this.targets, 'TargetSelectionMade', [message[1], message[2]]);
     };
 
+    $.Core.prototype.TargetAnnotationDraw = function(message) {
+        var self = this;
+        self.callFuncInList(this.targets, 'TargetAnnotationDraw', message);
+    };
+
     $.Core.prototype.ViewerEditorOpen = function(message) {
         var self = this;
-        self.callFuncInList(this.targets, 'ViewerEditorOpen', message[1]);
+        self.callFuncInList(this.targets, 'ViewerEditorOpen', message);
     };
 
     $.Core.prototype.ViewerDisplayOpen = function(message) {
         var self = this;
-        self.callFuncInList(this.targets, 'ViewerDisplayOpen', [message[1]]);
+        self.callFuncInList(this.targets, 'ViewerDisplayOpen', message);
     };
 
     $.Core.prototype.ViewerEditorClose = function(message) {
@@ -97,6 +102,22 @@
         var self = this;
         self.callFuncInList(this.targets, 'StorageAnnotationDelete', message);
     };
+
+    $.Core.prototype.StorageAnnotationLoad = function(message) {
+        var self = this;
+        self.callFuncInList(this.targets, 'StorageAnnotationLoad', message);
+    };
+
+    // $.Core.prototype.StorageAnnotationGetReplies = function(message) {
+    //     var self = this;
+    //     self.callFuncInList(this.targets, 'StorageAnnotationGetReplies', message);
+    // };
+
+    $.Core.prototype.StorageAnnotationSearch = function(message) {
+        var self = this;
+        //console.log('Received here');
+        self.callFuncInList(this.targets, 'StorageAnnotationSearch', message);
+    }
 
     // Util functions
 

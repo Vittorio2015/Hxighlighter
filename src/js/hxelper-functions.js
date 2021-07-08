@@ -27,16 +27,11 @@
                 left: left
             };
         } catch (e) {
-            return $$.mouseFixedPositionFromRange(annotation.ranges[0]);
+            return $$.mouseFixedPositionFromRange(event);
         }
     }
 
-    $$.mouseFixedPositionFromRange = function(range) {
-        try {
-            var boundingBox = range.end.parentElement.getBoundingClientRect();
-        } catch(e) {
-            var boundingBox = range.endContainer.parentElement.getBoundingClientRect();
-        }
+    $$.mouseFixedPositionFromRange = function(boundingBox) {
         return {
             top: boundingBox.top,
             left: boundingBox.left
@@ -53,6 +48,10 @@
                 text.push(Hxighlighter.trim(r.text()));
             } catch(e) {
                 text.push(Hxighlighter.trim(r.toString()))
+                if (r.toString === "[object Object]") {
+                    text.pop();
+                    text.push(r.exact);
+                }
             }
 
             var exact = text.join(' / ').replace(/[\n\r]/g, '<br>') ;
@@ -111,6 +110,7 @@
      * @param      {array}  list        The list
      */
     $$.publishEvent = function(eventName, instanceID, list) {
+        // console.log(eventName, list);
         if (!$$.exists(instanceID) || instanceID === "") {
             jQuery.each($$._instanceIDs, function(_, inst_id) {  
                 // some of the events require the core to handle calling the components in a certain order

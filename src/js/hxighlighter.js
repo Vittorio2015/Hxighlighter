@@ -25,7 +25,7 @@ root.Hxighlighter = root.Hxighlighter || function(options) {
         if (Hxighlighter.exists(options.commonInfo.context_id) &&
             Hxighlighter.exists(options.commonInfo.collection_id) &&
             Hxighlighter.exists(options.commonInfo.object_id)) {
-            inst_id = options.commonInfo.context_id + ':' + options.commonInfo.collection_id + ':' + options.commonInfo.object_id
+            inst_id = options.commonInfo.context_id.replace(/\+/g, '_') + ':' + options.commonInfo.collection_id + ':' + options.commonInfo.object_id
         } else {
             inst_id = Hxighlighter.getUniqueId();
         }
@@ -70,7 +70,7 @@ Hxighlighter.requiredEvents = [
 
     // though replies are not mandatory, they are annotations and should be treated similarly
     // the line below can be commented out should it not be relevant to your usecase.
-    "StorageAnnotationGetReplies",
+    "StorageAnnotationSearch",
 ];
 
 /**

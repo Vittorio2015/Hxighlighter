@@ -2,29 +2,67 @@
  * 
  */
 
+:root {
+    --text-background: #FFFFFF;
+    --text-accent-color: #687864;
+    --accent-color: #595959;
+    --light-font-color: #fff;
+    --accent-font-color: #888;
+    --dark-font-color: #000;
+    --pop-color: #2E75AF;
+    --lighter-background: #ededed;
+}
+
+body {
+    overflow-y: scroll;
+    width: 100%;
+}
+
 .annotation-slot {
     background: white;
-    padding: 15px;
+    background: var(--text-background);
+    padding: 30px 50px;
     border: 1px solid #888;
+    margin-top: 20px;
+    border-color: var(--text-accent-color);
     -webkit-box-shadow: 4px 4px 15px -5px rgba(97,96,97,0.79);
     -moz-box-shadow: 4px 4px 15px -5px rgba(97,96,97,0.79);
     box-shadow: 4px 4px 15px -5px rgba(97,96,97,0.79);
+    min-width: 733px;
+    min-width: calc(733px - var(--sidebar-width));
 }
 
-.hxighlighter-container {
-    padding: 50px 70px;
-    height: 100%;
+.btn-default {
+    background: #ededed;
+    background: var(--lighter-background);
 }
 
-::-webkit-scrollbar {
-    width: 12px;
+.hx-selector-img {
+    width: 0;
+    height: 0;
+    position: absolute;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 10px solid red;
 }
 
-::-webkit-scrollbar-track {
-    background-color: #ddd;
+.annotator-hl img {
+    border: 3px solid yellow;
+    outline: 1px solid black;
 }
- 
-::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    background-color: #333;
+
+.inst .fa-certificate {
+    color: var(--pop-color);
+}
+
+.annotator-wrapper {
+    margin-bottom: 20px;
+}
+
+span.annotation-mine {
+    /*text-decoration: underline dashed;*/
+}
+
+span.annotation-instructor {
+    /*text-decoration: underline wavy;*/
 }

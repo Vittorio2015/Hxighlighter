@@ -24,6 +24,7 @@ import 'jquery-confirm/css/jquery-confirm.css'
             template_urls: ""
         };
         this.options = jQuery.extend({}, defaultOptions, options);
+        console.log("Floating options", this.options);
         this.instance_id = inst_id;
         this.annotation_tool = {
             interactionPoint: null,
@@ -61,10 +62,18 @@ import 'jquery-confirm/css/jquery-confirm.css'
                 self.annotation_tool.viewer.addClass('static');
                 self.annotation_tool.isStatic = true;
             } catch(e) {
-                self.ViewerDisplayOpen(annotations);
+                self.ViewerDisplayOpen(event1, annotations);
                 self.annotation_tool.viewer.addClass('static');
                 self.annotation_tool.isStatic = true;
             }
+        });
+
+        jQuery('body').on('click', '.annotation-username', function(e) {
+            $.publishEvent('autosearch', self.instance_id, [jQuery(this).text().trim(), 'User']);
+        });
+
+        jQuery('body').on('click', '.annotation-tag', function(e) {
+            $.publishEvent('autosearch', self.instance_id, [jQuery(this).text().trim(), 'Tag']);
         });
 
         this.setUpPinAndMove();
@@ -98,11 +107,11 @@ import 'jquery-confirm/css/jquery-confirm.css'
 
     $.FloatingViewer.prototype.TargetSelectionMade = function(annotation, event) {
         // if (event && event instanceof MouseEvent) {
-            this.ViewerEditorOpen(annotation, false, $.mouseFixedPosition(event, annotation));
+            this.ViewerEditorOpen(event, annotation, false, $.mouseFixedPosition(event, annotation));
         // }
     };
 
-    $.FloatingViewer.prototype.ViewerEditorOpen = function(annotation, updating, interactionPoint) {
+    $.FloatingViewer.prototype.ViewerEditorOpen = function(event, annotation, updating, interactionPoint) {
         var self = this;
         if (self.annotation_tool.editing && self.annotation_tool.updating && self.annotation_tool.isStatic && !updating) {
             // there's already an open editor window for this instance so don't do anything
@@ -116,6 +125,7 @@ import 'jquery-confirm/css/jquery-confirm.css'
             self.annotation_tool.updating = false;
             self.annotation_tool.editing = false;
         }
+        jQuery('.edit').prop('disabled', true);
 
         // set editing mode
         self.annotation_tool.editing = true;
@@ -137,7 +147,8 @@ import 'jquery-confirm/css/jquery-confirm.css'
 
         // closes the editor tool and does not save annotation
         self.annotation_tool.editor.find('.cancel').click(function () {
-            $.publishEvent('ViewerEditorClose', self.instance_id, [annotation, false, !updating]);
+            console.log("HERE", annotation, !updating, true);
+            $.publishEvent('ViewerEditorClose', self.instance_id, [annotation, !updating, true]);
         });
 
         // closes the editor and does save annotations
@@ -147,45 +158,56 @@ import 'jquery-confirm/css/jquery-confirm.css'
                 annotation.annotationText.pop();
             }
             annotation.annotationText.push(text);
-            $.publishEvent('ViewerEditorClose', self.instance_id, [annotation, updating, false]);
+            $.publishEvent('ViewerEditorClose', self.instance_id, [annotation, !updating, false]);
         });
 
         self.annotation_tool.editor.find('#annotation-text-field').val(annotation.annotationText);
         setTimeout(function() {self.annotation_tool.editor.find('#annotation-text-field')[0].focus();}, 250);
 
-        //self.checkOrientation(self.annotation_tool.editor);
+        self.checkOrientation(self.annotation_tool.editor);
         $.publishEvent('editorShown', self.instance_id, [self.annotation_tool.editor, annotation]);
     };
 
     $.FloatingViewer.prototype.ViewerEditorClose = function(annotation, redraw, should_erase) {
         var self = this;
+        jQuery('.edit').prop('disabled', false);
+        jQuery('.note-link-popover').remove();
+        $.publishEvent('editorHidden', self.instance_id, []);
         if (self.annotation_tool.editor) {
             self.annotation_tool.editor.remove();
         }
         delete self.annotation_tool.editor;
         self.annotation_tool.editing = false;
         self.annotation_tool.updating = false;
-        jQuery('body').css('overflow', 'inherit');
+        // jQuery('body').css('overflow-y', 'scroll');
     };
 
-    $.FloatingViewer.prototype.ViewerDisplayOpen = function(annotations) {
+    $.FloatingViewer.prototype.ViewerDisplayOpen = function(event, anns) {
         var self = this;
+        var annotations = anns.reverse();
         // if the timer is set for the tool to be hidden, this intercepts it
         if (self.hideTimer !== undefined) {
             clearTimeout(self.hideTimer);
+            
         }
 
-        if (self.annotation_tool.editing || self.annotation_tool.updating || (self.annotation_tool.isStatic && Hxighlighter.exists(self.annotation_tool.viewer))) {
+        if (jQuery('.annotation-editor').is(':visible') || jQuery('.hx-confirm-button').is(':visible') || self.annotation_tool.editing || self.annotation_tool.updating || (self.annotation_tool.isStatic && Hxighlighter.exists(self.annotation_tool.viewer))) {
             // there's already an open editor window for this instance so don't do anything
             return;
         }
 
-        
+
         
         self.annotation_tool.viewerTemplate = self.options.TEMPLATES['viewer']({
             'viewerid': self.instance_id.replace(/:/g, '-'),
             'annotations': annotations,
+            'instructor_ids': self.options.instructors,
+            'common_name': (self.options.common_instructor_name && self.options.common_instructor_name !== "") ? self.options.common_instructor_name : "",
         });
+
+        if (self.options.viewer_options.readonly) {
+            self.annotation_tool.viewerTemplate = self.annotation_tool.viewerTemplate.replace(/<button class="edit".*?<\/button>/g, '').replace(/<button class="delete".*?<\/button>/g, '')
+        }
 
         // add the viewer to the DOM
         self.element.find('.annotator-wrapper').after(self.annotation_tool.viewerTemplate);
@@ -195,7 +217,7 @@ import 'jquery-confirm/css/jquery-confirm.css'
             delete self.annotation_tool.viewer
         }
         self.annotation_tool.viewer = jQuery('#annotation-viewer-' + self.instance_id.replace(/:/g, '-'));
-        var newTop = annotator.util.mousePosition(event).top - jQuery(window).scrollTop();
+        var newTop = annotator.util.mousePosition(event).top - jQuery(window).scrollTop() + 20;
         var newLeft = annotator.util.mousePosition(event).left + 30
         self.annotation_tool.viewer.css({
             'top': newTop,
@@ -208,12 +230,13 @@ import 'jquery-confirm/css/jquery-confirm.css'
             self.annotation_tool.isStatic = false;
             self.annotation_tool.viewer.remove();
             delete self.annotation_tool.viewer;
+            // jQuery('body').css('overflow-y', 'scroll');
         });
 
         self.annotation_tool.viewer.find('.edit').click(function (event1) {
             var annotation_id = jQuery(this).attr('id').replace('edit-', '');
             var filtered_annotation = annotations.find(function(ann) { if (ann.id === annotation_id) return ann; });
-            self.ViewerEditorOpen(filtered_annotation, true, {
+            self.ViewerEditorOpen(event1, filtered_annotation, true, {
                 top: parseInt(self.annotation_tool.viewer.css('top'), 10),
                 left: parseInt(self.annotation_tool.viewer.css('left'), 10)
             });
@@ -236,15 +259,16 @@ import 'jquery-confirm/css/jquery-confirm.css'
                         self.annotation_tool.isStatic = false;
                         self.annotation_tool.updating = false;
                         self.annotation_tool.editing = false;
+                        // jQuery('body').css('overflow-y', 'scroll');
                     }
                 },
                 cancel: function () {
                 }
             }
         });
-
+        // console.log(annotations);        
         $.publishEvent('displayShown', self.instance_id, [self.annotation_tool.viewer, annotations]);
-
+        self.checkOrientation(self.annotation_tool.viewer);
     };
 
     $.FloatingViewer.prototype.ViewerDisplayClose = function(annotations) {
@@ -254,19 +278,38 @@ import 'jquery-confirm/css/jquery-confirm.css'
             return;
         }
 
+        console.log('should hide display');
+        clearTimeout(self.hideTimer);
         self.hideTimer = setTimeout(function () {
-            if (self.annotation_tool.viewer) {
-                self.annotation_tool.viewer.remove();
-                delete self.annotation_tool.viewer;
+            if (self.hideTimer) {
+                $.publishEvent('displayHidden', self.instance_id, []);
+                if (self.annotation_tool.viewer) {
+                    self.annotation_tool.viewer.remove();
+                    delete self.annotation_tool.viewer;
+                }
+                self.annotation_tool.isStatic = false;
+                self.annotation_tool.updating = false;
+                self.annotation_tool.editing = false;
+                // jQuery('body').css('overflow-y', 'scroll');
             }
-            self.annotation_tool.isStatic = false;
-            self.annotation_tool.updating = false;
-            self.annotation_tool.editing = false;
         }, 500);
+        
     };
 
     $.FloatingViewer.prototype.StorageAnnotationSave = function(annotations) {
 
+    };
+
+    $.FloatingViewer.prototype.StorageAnnotationLoad = function(first_argument) {
+        var self = this;
+        if (self.annotation_tool.viewer) {
+            self.annotation_tool.viewer.remove();
+            delete self.annotation_tool.viewer;
+        }
+        self.annotation_tool.isStatic = false;
+        self.annotation_tool.updating = false;
+        self.annotation_tool.editing = false;
+        // jQuery('body').css('overflow-y', 'scroll');
     };
 
     $.FloatingViewer.prototype.StorageAnnotationDelete = function(annotation) {
@@ -309,13 +352,25 @@ import 'jquery-confirm/css/jquery-confirm.css'
            self.finishedMoving(event);
         });
 
-        jQuery('body').on('mouseover', '.annotation-editor', function(event) {
-            jQuery('body').css('overflow', 'hidden');
-        });
+        // jQuery('body').on('mouseover', '.annotation-editor', function(event) {
+        //     jQuery('body').css('overflow-y', 'hidden');
+        // });
 
-        jQuery('body').on('mouseleave', '.annotation-editor', function(event) {
-            jQuery('body').css('overflow', 'inherit');
-        });
+        // jQuery('body').on('mouseleave', '.annotation-editor', function(event) {
+        //     jQuery('body').css('overflow-y', 'scroll');
+        // });
+
+        // jQuery('body').on('mouseover', '.annotation-viewer', function(event) {
+        //     jQuery('body').css('overflow-y', 'hidden');
+        // });
+
+        // jQuery('body').on('mouseleave', '.annotation-viewer', function(event) {
+        //     jQuery('body').css('overflow-y', 'scroll');
+        // });
+
+        jQuery('body').on('mouseleave', function(event) {
+            self.finishedMoving(event);
+        })
 
     };
 
@@ -349,12 +404,18 @@ import 'jquery-confirm/css/jquery-confirm.css'
             var newLeft = move.left - self.itemMoving.offsetLeftBy;
             
 
-            var borderBox = self.element[0].getBoundingClientRect();
-            if (newTop < borderBox.y) {
-                newTop = borderBox.y;
+            // var borderBox = self.element[0].getBoundingClientRect();
+            if (newTop < 0) {
+                newTop = 0;
             }
-            if (newLeft < borderBox.x) {
-                newLeft = borderBox.x;
+            if (newLeft < 0) {
+                newLeft = 0;
+            }
+            if (newTop + self.itemMoving.outerHeight() > window.innerHeight) {
+                newTop = window.innerHeight - self.itemMoving.outerHeight();
+            }
+            if (newLeft + self.itemMoving.outerWidth() > window.innerWidth) {
+                newLeft = window.innerWidth - self.itemMoving.outerWidth();
             }
 
             /* TODO: Set boundaries for far right and far down */
@@ -385,6 +446,30 @@ import 'jquery-confirm/css/jquery-confirm.css'
                 left: move.left - self.itemMoving.offsetLeftBy
             };
         }
+    };
+
+    $.FloatingViewer.prototype.checkOrientation = function(viewerElement) {
+        var self = this;
+        var newTop = parseInt(jQuery(viewerElement).css('top'), 10);
+        var newLeft = parseInt(jQuery(viewerElement).css('left'), 10);
+        var elWidth = parseInt(jQuery(viewerElement).outerWidth());
+        var elHeight = parseInt(jQuery(viewerElement).outerHeight());
+
+        if (newTop < 0) {
+            newTop = 0;
+        }
+        if (newLeft < 0) {
+            newLeft = 0;
+        }
+        if (newTop + elHeight > window.innerHeight) {
+            newTop = window.innerHeight - elHeight - 34 - 75; // 34 is the height of the save/cancel buttons that get cut off 
+        }
+        if (newLeft + elWidth > window.innerWidth) {
+            newLeft = window.innerWidth - elWidth - 12; // 12 is the width of the scroll bar
+        }
+
+        jQuery(viewerElement).css('top', newTop);
+        jQuery(viewerElement).css('left', newLeft);
     };
 
     $.viewers.push($.FloatingViewer);

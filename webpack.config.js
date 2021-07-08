@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const WebpackAutoInject = require('webpack-auto-inject-version');
 
 const PATHS = {
     vendor: path.join(__dirname, 'src/js/vendors/'),
@@ -10,9 +11,9 @@ const PATHS = {
 
 module.exports = {
     entry: {
-        text: ['./src/text-index.js']
+        text: ['./src/text-index.js'],
+        text_lite: ['./src/author-index.js']
     },
-    devtool: 'source-map',
     plugins: [
         new webpack.ProvidePlugin({
             "jquery": require.resolve('jquery'),
@@ -28,6 +29,18 @@ module.exports = {
           'require.specified': 'require.resolve'
         }),
         new webpack.IgnorePlugin(/^codemirror$/),
+        new WebpackAutoInject({
+            components: {
+                InjectAsComment: true
+            },
+            componentsOptions: {
+                InjectAsComment: {
+                    tag: 'Version: {version} - {date}',
+                    dateFormat: 'dddd, mmmm dS, yyyy, h:MM:ss TT',
+                    multiLineCommentType: false,
+                }
+            }
+        }),
     ],
     output: {
         path: __dirname,
@@ -40,6 +53,9 @@ module.exports = {
             'CodeMirror': 'codemirror',
             'jquery-tokeninput': PATHS.modules + 'jquery.tokeninput/'
         }
+    },
+    optimization: {
+        minimize: false
     },
     module: {
         rules: [
@@ -66,6 +82,16 @@ module.exports = {
             {
                 test: /(floating|sidebar)\.html$/,
                 use: ['underscore-template-loader']
+            },
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
             }
         ]
     },
